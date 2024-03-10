@@ -3,6 +3,7 @@ package AdminPanel
 import (
 	"fmt"
 	tb "gopkg.in/telebot.v3"
+	"log"
 	"strconv"
 )
 
@@ -38,10 +39,30 @@ func CreateAdminApprovalHandlers(c tb.Context, b *tb.Bot, setHouse *tb.ReplyMark
 	acceptBtn, rejectBtn := requestAdminApproval(c, b)
 
 	b.Handle(&acceptBtn, func(c tb.Context) error {
-		return c.Send("Пожалуйста, выберите свой дом", setHouse)
+		userID, err := strconv.ParseInt(c.Data(), 10, 64)
+		if err != nil {
+			log.Println("Ошибка при преобразовании данных кнопки в ID пользователя:", err)
+			return err
+		}
+		_, err = b.Send(tb.ChatID(userID), "Ваш запрос на доступ одобрен. Пожалуйста, выберите свой дом.", setHouse)
+		if err != nil {
+			log.Println("Ошибка при отправке сообщения пользователю:", err)
+			return err
+		}
+		return nil
 	})
 
 	b.Handle(&rejectBtn, func(c tb.Context) error {
-		return c.Send("В доступе отказано")
+		userID, err := strconv.ParseInt(c.Data(), 10, 64)
+		if err != nil {
+			log.Println("Ошибка при преобразовании данных кнопки в ID пользователя:", err)
+			return err
+		}
+		_, err = b.Send(tb.ChatID(userID), "В доступе отказано.")
+		if err != nil {
+			log.Println("Ошибка при отправке сообщения пользователю:", err)
+			return err
+		}
+		return nil
 	})
 }

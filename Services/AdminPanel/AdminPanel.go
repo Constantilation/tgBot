@@ -24,8 +24,9 @@ func showAdminPanel() (tenantsBtn, activeOrdersBtn tb.Btn, markup *tb.ReplyMarku
 	return
 }
 
-func ActiveOrdersHandler(c tb.Context, db *sql.DB) error {
-	orders, err := Handlers.GetActiveOrdersForHouse(db, c.Text()) // Функция для получения заказов для дома
+func ActiveOrdersHandler(c tb.Context, db *sql.DB, house string) error {
+	fmt.Println(house)
+	orders, err := Handlers.GetActiveOrdersForHouse(db, house) // Функция для получения заказов для дома
 	if err != nil {
 		log.Println(GetOrdersForHouseError, err)
 		return c.Send(GetOrdersForHouseError)
@@ -46,9 +47,9 @@ func ActiveOrdersHandler(c tb.Context, db *sql.DB) error {
 	return err
 }
 
-func EvictHandler(c tb.Context, db *sql.DB) error {
+func EvictHandler(c tb.Context, db *sql.DB, userId int64) error {
 	// Выполняем логику выселения
-	err := Handlers.EvictTenant(db, c.Chat().ID)
+	err := Handlers.EvictTenant(db, userId)
 	if err != nil {
 		log.Println(err)
 		return c.Respond(&tb.CallbackResponse{Text: tenantEvictionError})
@@ -101,7 +102,7 @@ func CreateAdminPanelHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 			evictionBtn := tb.InlineButton{
 				Unique: "evict", // Уникальный идентификатор кнопки с использованием названия дома
 				Text:   tenantsEvict,
-				Data:   "evict_" + tenant.HouseName,
+				Data:   "evict_" + strconv.FormatInt(tenant.UserID, 10),
 			}
 			markup := &tb.ReplyMarkup{}
 			markup.InlineKeyboard = [][]tb.InlineButton{{evictionBtn}}
@@ -120,27 +121,29 @@ func CreateAdminPanelHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 			return c.Send(houseGetError)
 		}
 
-		markup := tb.ReplyMarkup{ResizeKeyboard: true} // Инициализация клавиатуры
-		var buttons []tb.Btn                           // Слайс для кнопок
+		var inlineButtons [][]tb.InlineButton // Используем двумерный слайс для группировки кнопок
 
-		// Создание кнопок для каждого дома
-		for _, house := range houses {
-			btn := markup.Text(house)      // Создаем кнопку
-			buttons = append(buttons, btn) // Добавляем кнопку в слайс
+		if len(houses) == 0 {
+			return c.Send("Нет активных заказов")
 		}
 
-		// Добавляем кнопку "Назад" отдельно
-		backButton := markup.Text(AdminPanelName)
-		buttons = append(buttons, backButton)
+		// Создаем inline кнопки для каждого дома
+		for _, house := range houses {
+			btn := tb.InlineButton{
+				Unique: "active_order_" + house, // Уникальный идентификатор кнопки
+				Text:   house,                   // Текст кнопки
+				// Data используется для передачи информации обратно в коллбек
+				Data: house, // Данные кнопки, которые будут использоваться в коллбеке
+			}
+			// Добавляем кнопку в список
+			inlineButtons = append(inlineButtons, []tb.InlineButton{btn})
+		}
 
-		// Добавление всех кнопок в клавиатуру
-		markup.Reply(
-			// Для каждой кнопки создаем отдельную строку
-			markup.Row(buttons...),
-		)
+		// Создаем inline клавиатуру с кнопками
+		markup := &tb.ReplyMarkup{InlineKeyboard: inlineButtons}
 
-		// Отправляем сообщение с клавиатурой
-		err = c.Send(chooseHouseToSeeOrdersText, &markup)
+		// Отправляем сообщение с inline клавиатурой
+		err = c.Send(chooseHouseToSeeOrdersText, markup)
 		if err != nil {
 			log.Println(keyboardMessageError, err)
 		}

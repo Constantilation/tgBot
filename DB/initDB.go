@@ -4,17 +4,16 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	"os"
 )
 
 func InitDB() *sql.DB {
-	dbPath := os.Getenv("DB_PATH")
+	//dbPath := os.Getenv("DB_PATH")
 
-	if dbPath == "" {
-		log.Fatal("DB_PATH не задан", dbPath)
-	}
+	//if dbPath == "" {
+	//	log.Fatal("DB_PATH не задан", dbPath)
+	//}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3", "./db.db")
 	if err != nil {
 		log.Fatal(err)
 	}

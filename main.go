@@ -4,6 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	tb "gopkg.in/telebot.v3"
 	"log"
+	"strconv"
 	"strings"
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB"
@@ -81,15 +82,6 @@ func main() {
 					return c.Send(AdminPanel.AdminPanelName, adminPanel)
 				}
 			}
-		case AdminPanel.ActiveOrdersBtnName:
-			{
-				if !isAdmin(c.Chat().ID) {
-					return mainMenuHandler(c)
-				} else {
-					err = AdminPanel.ActiveOrdersHandler(c, db)
-				}
-			}
-
 		default:
 			return c.Send("Для вызова меню напишите /start")
 		}
@@ -107,8 +99,21 @@ func main() {
 			}
 
 			if strings.HasPrefix(parts[1], "evict_") {
-				return AdminPanel.EvictHandler(c, db)
+				userIDStr := strings.TrimPrefix(parts[1], "evict_")
+				userID, err := strconv.ParseInt(userIDStr, 10, 64)
+				if err != nil {
+					log.Println("Ошибка при конвертации ID пользователя:", err)
+					return c.Respond(&tb.CallbackResponse{Text: "Произошла ошибка при обработке запроса."})
+				}
+				return AdminPanel.EvictHandler(c, db, userID) // Передаем userID в функцию выселения
 			}
+
+			if strings.Contains(parts[0], "active_order") {
+				err = AdminPanel.ActiveOrdersHandler(c, db, parts[1])
+				c.Edit("Актуальные заказы")
+				return c.Respond(&tb.CallbackResponse{Text: "Команда выполнена"})
+			}
+
 		} else {
 			return c.Send("Неизвестная ошибка")
 		}
