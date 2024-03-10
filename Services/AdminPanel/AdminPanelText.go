@@ -3,6 +3,7 @@ package AdminPanel
 var (
 	tenantsBtnName             = "Текущие жильцы"
 	tenantsGetError            = "Ошибка при получении списка жильцов."
+	tenantsAreMissing          = "Жильцы отсутствуют"
 	tenantsEvict               = "Выселение"
 	tenantEvicted              = "Жилец выселен."
 	tenantEvictionError        = "Ошибка при выселении."

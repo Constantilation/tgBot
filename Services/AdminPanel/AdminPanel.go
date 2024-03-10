@@ -93,6 +93,10 @@ func CreateAdminPanelHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 			return c.Send(tenantsGetError, adminPanel)
 		}
 
+		if len(tenants) == 0 {
+			return c.Send(tenantsAreMissing, adminPanel)
+		}
+
 		for _, tenant := range tenants {
 			evictionBtn := tb.InlineButton{
 				Unique: "evict", // Уникальный идентификатор кнопки с использованием названия дома
@@ -142,79 +146,6 @@ func CreateAdminPanelHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 		}
 		return nil
 	})
-
-	//b.Handle(tb.OnText, func(c tb.Context) error {
-	//	if c.Text() == AdminPanelName {
-	//		return c.Send(AdminPanelName, adminPanel)
-	//	}
-	//
-	//	orders, err := Handlers.GetActiveOrdersForHouse(db, c.Text()) // Функция для получения заказов для дома
-	//	if err != nil {
-	//		log.Println(GetOrdersForHouseError, err)
-	//		return c.Send(GetOrdersForHouseError)
-	//	}
-	//
-	//	for _, order := range orders {
-	//		markup := &tb.ReplyMarkup{}
-	//		doneButton := tb.InlineButton{
-	//			Unique: "order_done", // Уникальный ключ обработчика
-	//			Text:   Done,
-	//			Data:   "order_done_" + strconv.Itoa(order.ID), // Где orderID - это ID заказа
-	//		}
-	//		markup.InlineKeyboard = [][]tb.InlineButton{{doneButton}}
-	//
-	//		c.Send(fmt.Sprintf("Заказ %d: %s", order.ID, order.Description), markup)
-	//	}
-	//	return nil
-	//})
-	//
-	//b.Handle(tb.OnCallback, func(c tb.Context) error {
-	//	data := c.Callback().Data
-	//
-	//	// Разбиваем полученную строку по символу '|'
-	//	parts := strings.Split(data, "|")
-	//
-	//	if len(parts) > 1 {
-	//		if strings.HasPrefix(parts[1], "order_done_") {
-	//			// Извлекаем ID заказа из второй части
-	//			orderIDStr := strings.TrimPrefix(parts[1], "order_done_")
-	//			orderID, err := strconv.Atoi(orderIDStr)
-	//			if err != nil {
-	//				fmt.Println("Ошибка при конвертации ID заказа:", err)
-	//				return c.Respond(&tb.CallbackResponse{Text: orderHandleError})
-	//			}
-	//
-	//			// Ваша логика по обработке выполнения заказа
-	//			err = Handlers.MarkOrderAsDone(db, orderID)
-	//			if err != nil {
-	//				fmt.Println(orderHandleError, err)
-	//				return c.Respond(&tb.CallbackResponse{Text: orderHandleError})
-	//			}
-	//
-	//			// Отправляем ответ на callback, что заказ выполнен
-	//			c.Respond(&tb.CallbackResponse{Text: orderHandleDone})
-	//			// Опционально, обновляем сообщение для устранения кнопки
-	//			return c.Edit(orderDone)
-	//		}
-	//
-	//		if strings.HasPrefix(parts[1], "evict_") {
-	//			// Выполняем логику выселения
-	//			err := Handlers.EvictTenant(db, c.Chat().ID)
-	//			if err != nil {
-	//				log.Println(err)
-	//				return c.Respond(&tb.CallbackResponse{Text: tenantEvictionError})
-	//			}
-	//
-	//			// Отправляем подтверждение об успешном выселении
-	//			c.Respond(&tb.CallbackResponse{Text: tenantEvicted})
-	//
-	//			return c.Edit(tenantEvicted)
-	//		}
-	//		return nil
-	//	}
-	//
-	//	return nil
-	//})
 
 	return adminPanel
 }

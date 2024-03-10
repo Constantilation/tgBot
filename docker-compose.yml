@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  bot:
+    build: .
+    volumes:
+      - ./data:/data # Папка для SQLite DB
+    environment:
+      - DB_PATH=/data/bot_db.db # Пример, как передать путь к DB через переменную окружения
