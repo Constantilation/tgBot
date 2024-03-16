@@ -2,7 +2,7 @@
 FROM golang:1.21rc3 as builder
 
 # Установка зависимостей для CGO
-RUN apt-get update && apt-get install -y libsqlite3-dev gcc
+RUN apt-get update && apt-get install -y default-libmysqlclient-dev gcc
 
 WORKDIR /app
 

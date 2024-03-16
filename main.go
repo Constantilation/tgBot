@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	tb "gopkg.in/telebot.v3"
 	"log"
@@ -9,10 +10,14 @@ import (
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB"
 	"tgBotElgora/DB/Handlers"
+	"tgBotElgora/Helpers"
 	"tgBotElgora/Services/AdminPanel"
+	"tgBotElgora/Services/MainMenu"
 	"tgBotElgora/Services/SetHouse"
 	"time"
 )
+
+var selectedHouses = make(map[int64]string)
 
 func main() {
 	envErr := godotenv.Load()
@@ -36,15 +41,14 @@ func main() {
 	db := DB.InitDB()
 	defer db.Close()
 
-	mainMenu := setupHandlers(b, db)
-	setHouse := SetHouse.SetupSetHouseHandlers(b, mainMenu, db)
-	adminPanel := AdminPanel.CreateAdminPanelHandlers(b, db)
+	mainMenu := MainMenu.SetupMainMenuHandlers(b, db)
 
 	var mainMenuHandler = func(c tb.Context) error {
 		userID := c.Sender().ID
 		_, err := Handlers.GetUserApartmentByChatID(db, userID)
 
 		if err != nil {
+			setHouse := SetHouse.SetupSetHouseHandlers(b, mainMenu, db)
 			AdminPanel.CreateAdminApprovalHandlers(c, b, setHouse)
 		} else {
 			// Если пользователь найден в базе данных, показать главное меню
@@ -62,9 +66,10 @@ func main() {
 	b.Handle("/admin_panel", func(c tb.Context) error {
 		userID := c.Sender().ID
 
-		if !isAdmin(userID) {
+		if !Helpers.IsAdmin(userID) {
 			return mainMenuHandler(c)
 		}
+		adminPanel := AdminPanel.CreateAdminPanelHandlers(b, db)
 
 		// Здесь можно добавить логику для отображения админской панели,
 		// например, отправить сообщение с кнопками для управления заказами и пользователями
@@ -76,9 +81,10 @@ func main() {
 		switch text {
 		case AdminPanel.AdminPanelName:
 			{
-				if !isAdmin(c.Chat().ID) {
+				if !Helpers.IsAdmin(c.Chat().ID) {
 					return mainMenuHandler(c)
 				} else {
+					adminPanel := AdminPanel.CreateAdminPanelHandlers(b, db)
 					return c.Send(AdminPanel.AdminPanelName, adminPanel)
 				}
 			}
@@ -94,11 +100,12 @@ func main() {
 		parts := strings.Split(data, "|")
 
 		if len(parts) > 1 {
-			if strings.HasPrefix(parts[1], "order_done_") {
+
+			if strings.Contains(parts[0], "order_done") {
 				return AdminPanel.OrderDoneHandler(parts[1], db, c)
 			}
 
-			if strings.HasPrefix(parts[1], "evict_") {
+			if strings.Contains(parts[0], "evict") {
 				userIDStr := strings.TrimPrefix(parts[1], "evict_")
 				userID, err := strconv.ParseInt(userIDStr, 10, 64)
 				if err != nil {
@@ -106,6 +113,13 @@ func main() {
 					return c.Respond(&tb.CallbackResponse{Text: "Произошла ошибка при обработке запроса."})
 				}
 				return AdminPanel.EvictHandler(c, db, userID) // Передаем userID в функцию выселения
+			}
+
+			if strings.Contains(parts[0], "house") {
+				selectedHouses[c.Chat().ID] = parts[1]
+				contactRequest := "Пожалуйста, поделитесь своим контактом, нажав на кнопку ниже:"
+				contactButton := tb.ReplyButton{Text: "Поделиться своим контактом", Contact: true}
+				c.Send(contactRequest, &tb.ReplyMarkup{ReplyKeyboard: [][]tb.ReplyButton{{contactButton}}, ResizeKeyboard: true})
 			}
 
 			if strings.Contains(parts[0], "active_order") {
@@ -119,6 +133,21 @@ func main() {
 		}
 
 		return nil
+	})
+
+	b.Handle(tb.OnContact, func(c tb.Context) error {
+		phoneNumber := c.Message().Contact.PhoneNumber
+		houseName := selectedHouses[c.Chat().ID]
+
+		SetHouse.HouseNumber(c, houseName, phoneNumber, db)
+
+		if err != nil {
+			return c.Send("Произошла ошибка при сохранении номера квартиры.")
+		}
+
+		houseName, _ = Helpers.GetHouseName(houseName)
+		c.Edit(fmt.Sprintf("Номер дома сохранен: %s. Теперь вы можете использовать другие команды.", houseName))
+		return c.Send("Главное меню", mainMenu)
 	})
 
 	b.Start()

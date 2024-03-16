@@ -5,4 +5,8 @@ services:
     volumes:
       - ./data:/data # Папка для SQLite DB
     environment:
-      - DB_PATH=/data/bot_db.db # Пример, как передать путь к DB через переменную окружения
+      - DB_DRIVER=mysql
+      - DB_USER=root
+      - DB_PASS=293456WwW
+      - DB_HOST=host.docker.internal
+      - DB_NAME=bot_db

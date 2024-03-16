@@ -7,6 +7,7 @@ import (
 	"log"
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB/Handlers"
+	"tgBotElgora/Helpers"
 )
 
 func createOrderServices() (*tb.ReplyMarkup, []tb.Btn) {
@@ -36,8 +37,6 @@ func orderButtonHandler(b *tb.Bot, serviceName string, unique string, db *sql.DB
 		Data:   serviceName,
 	}
 
-	fmt.Println(serviceName, "here 2", orderButton)
-
 	b.Handle(&orderButton, func(c tb.Context) error {
 		adminID, err := config.GetInt64Config(config.AdminId)
 		if err != nil {
@@ -60,6 +59,10 @@ func orderButtonHandler(b *tb.Bot, serviceName string, unique string, db *sql.DB
 
 		orderMessage := fmt.Sprintf("Заказ услуги: %s. Дом %s", serviceName, apartmentNumber)
 		b.Send(tb.ChatID(adminID), orderMessage)
+		botToken := config.GetConfig(config.TelegramBotToken)
+		chatId := tb.ChatID(adminID)
+		phoneNumber, _ := Handlers.GetUserPhoneByChatID(db, c.Chat().ID)
+		Helpers.SendContactViaTelegramAPI(botToken, int64(chatId), c.Chat().FirstName, c.Chat().LastName, phoneNumber)
 		return c.Send(orderSent)
 	})
 

@@ -3,11 +3,10 @@ package Handlers
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // AddOrUpdateUserApartment добавляет или обновляет номер квартиры пользователя.
-func AddOrUpdateUserApartment(db *sql.DB, chatID int64, apartment string) error {
+func AddOrUpdateUserApartment(db *sql.DB, chatID int64, apartment string, phoneNumber string) error {
 	// Проверяем, существует ли уже пользователь
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE chat_id = ?)", chatID).Scan(&exists)
@@ -17,13 +16,13 @@ func AddOrUpdateUserApartment(db *sql.DB, chatID int64, apartment string) error 
 
 	if exists {
 		// Если пользователь существует, обновляем его данные
-		_, err := db.Exec("UPDATE users SET apartment = ? WHERE chat_id = ?", apartment, chatID)
+		_, err := db.Exec("UPDATE users SET apartment = ?, phone_number = ? WHERE chat_id = ?", apartment, phoneNumber, chatID)
 		if err != nil {
 			return fmt.Errorf("error updating user apartment: %v", err)
 		}
 	} else {
 		// Если пользователь не существует, добавляем новую запись
-		_, err := db.Exec("INSERT INTO users (chat_id, apartment) VALUES (?, ?)", chatID, apartment)
+		_, err := db.Exec("INSERT INTO users (chat_id, apartment, phone_number) VALUES (?, ?, ?)", chatID, apartment, phoneNumber)
 		if err != nil {
 			return fmt.Errorf("error inserting new user: %v", err)
 		}
@@ -40,6 +39,15 @@ func GetUserApartmentByChatID(db *sql.DB, chatID int64) (string, error) {
 		return "", fmt.Errorf("unable to fetch apartment number for user %d: %v", chatID, err)
 	}
 	return apartmentNumber, nil
+}
+
+func GetUserPhoneByChatID(db *sql.DB, chatID int64) (string, error) {
+	var phoneNumber string
+	err := db.QueryRow("SELECT phone_number FROM users WHERE chat_id = ?", chatID).Scan(&phoneNumber)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch apartment number for user %d: %v", chatID, err)
+	}
+	return phoneNumber, nil
 }
 
 func GetWifiCredentialsByUserID(db *sql.DB, userID int64) (string, string, string, error) {

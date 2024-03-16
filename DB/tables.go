@@ -24,7 +24,7 @@ func fillWifiCredentials(db *sql.DB) {
 		login := config.GetConfig(loginKey)
 		password := config.GetConfig(passwordKey)
 
-		_, err := db.Exec("INSERT INTO wifi_credentials (house_name, login, password) VALUES (?, ?, ?) ON CONFLICT(house_name) DO UPDATE SET login = excluded.login, password = excluded.password", fmt.Sprintf("Шале %d", i), login, password)
+		_, err := db.Exec("INSERT INTO wifi_credentials (house_name, login, password) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE login = VALUES(login), password = VALUES(password)", fmt.Sprintf("shale_%d", i), login, password)
 		if err != nil {
 			log.Fatalf("Failed to insert WIFI credentials for house %d: %v", i, err)
 		}
@@ -38,7 +38,7 @@ func fillWifiCredentials(db *sql.DB) {
 		login := config.GetConfig(loginKey)
 		password := config.GetConfig(passwordKey)
 
-		_, err := db.Exec("INSERT INTO wifi_credentials (house_name, login, password) VALUES (?, ?, ?) ON CONFLICT(house_name) DO UPDATE SET login = excluded.login, password = excluded.password", fmt.Sprintf("Минидом %d", i), login, password)
+		_, err := db.Exec("INSERT INTO wifi_credentials (house_name, login, password) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE login = VALUES(login), password = VALUES(password)", fmt.Sprintf("mini_%d", i), login, password)
 		if err != nil {
 			log.Fatalf("Failed to insert WIFI credentials for house %d: %v", i, err)
 		}
@@ -48,7 +48,7 @@ func fillWifiCredentials(db *sql.DB) {
 func createWiFiTable(db *sql.DB) (err error) {
 	// Создаем и заполняем таблицу wifi_credentials, если она не существует
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS wifi_credentials (
-		house_name TEXT PRIMARY KEY ,
+		house_name VARCHAR(255) PRIMARY KEY, -- Указываем максимальную длину ключа
 		login TEXT NOT NULL,
 		password TEXT NOT NULL
 	);`)
@@ -65,9 +65,10 @@ func createWiFiTable(db *sql.DB) (err error) {
 func createUserTable(db *sql.DB) (err error) {
 	// Создание таблицы юзеров, если ее не существуют
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
         chat_id INTEGER UNIQUE NOT NULL,
-        apartment TEXT
+        apartment TEXT,
+        phone_number TEXT
     );`)
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +80,7 @@ func createUserTable(db *sql.DB) (err error) {
 func createOrderTabled(db *sql.DB) (err error) {
 	// Создание таблицы заказов, если ее не существует
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
     user_id INTEGER NOT NULL,
     house_name TEXT NOT NULL,
     status TEXT NOT NULL,

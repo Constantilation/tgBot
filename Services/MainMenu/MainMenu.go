@@ -8,6 +8,7 @@ import (
 	"log"
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB/Handlers"
+	"tgBotElgora/Helpers"
 	"tgBotElgora/Services/OrderMenu"
 )
 
@@ -51,7 +52,9 @@ func SetupMainMenuHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 
 		}
 
-		return c.Send(fmt.Sprintf(wiFiText, houseNumber, login, password))
+		houseName, _ := Helpers.GetHouseName(houseNumber)
+
+		return c.Send(fmt.Sprintf(wiFiText, houseName, login, password))
 	})
 
 	b.Handle(&btns[2], func(c tb.Context) error {
@@ -79,7 +82,7 @@ func SetupMainMenuHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 		adminPhone := config.GetConfig(config.AdminPhone)
 		botToken := config.GetConfig(config.TelegramBotToken)
 
-		sendContactViaTelegramAPI(botToken, c.Chat().ID, adminName, adminLastName, adminPhone)
+		Helpers.SendContactViaTelegramAPI(botToken, c.Chat().ID, adminName, adminLastName, adminPhone)
 
 		// Теперь мы отправляем контакт без ошибки
 		return c.Send(contactAdminHandlerText)

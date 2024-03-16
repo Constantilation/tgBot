@@ -3,13 +3,15 @@ package SetHouse
 import (
 	"database/sql"
 	"fmt"
+	tb "gopkg.in/telebot.v3"
 	"tgBotElgora/DB/Handlers"
 )
 
 var (
-	shaleName     = "Шале"
-	miniHouseName = "Мини-дом"
-
+	shaleName       = "Шале"
+	shaleBDName     = "shale"
+	miniHouseName   = "Мини-дом"
+	miniHouseBDName = "mini"
 	chooseShale     = "Выберите номер шале"
 	chooseMiniHouse = "Выберите номер минидома"
 
@@ -19,23 +21,39 @@ var (
 var SHALE_AMOUNT = 6
 var MINI_HOUSE_AMOUNT = 3
 
-func getHouseNames(db *sql.DB, key string) []string {
-	var names []string
+type HouseInlineButton struct {
+	Unique string
+	Text   string
+	Data   string
+}
+
+type HouseInlineKeyboard struct {
+	InlineKeyboard [][]tb.InlineButton
+}
+
+func getHouseNames(db *sql.DB, key string) []HouseInlineButton {
+	var names []HouseInlineButton
 	var houseAmount int
+	var displayName string
 
 	switch key {
-	case shaleName:
+	case shaleBDName:
 		houseAmount = SHALE_AMOUNT
-	case miniHouseName:
+		displayName = shaleName
+	case miniHouseBDName:
 		houseAmount = MINI_HOUSE_AMOUNT
+		displayName = miniHouseName
 	default:
-		return []string{}
+		return []HouseInlineButton{}
 	}
 
 	// Запрашиваем доступность каждого дома из базы данных
 	for i := 1; i <= houseAmount; i++ {
-		houseName := fmt.Sprintf("%s %d", key, i)
-		isOccupied, err := Handlers.GetHouseOccupied(db, houseName)
+		houseIdentifier := fmt.Sprintf("%s_%s_%d", "house", key, i)
+		houseData := fmt.Sprintf("%s_%d", key, i)
+		houseDisplayName := fmt.Sprintf("%s %d", displayName, i)
+		isOccupied, err := Handlers.GetHouseOccupied(db, houseData)
+		fmt.Println(isOccupied, err)
 
 		if err != nil && err != sql.ErrNoRows {
 			fmt.Println(err)
@@ -43,7 +61,11 @@ func getHouseNames(db *sql.DB, key string) []string {
 		}
 
 		if !isOccupied {
-			names = append(names, houseName)
+			names = append(names, HouseInlineButton{
+				Data:   houseData,
+				Text:   houseDisplayName,
+				Unique: houseIdentifier,
+			})
 		}
 	}
 

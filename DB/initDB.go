@@ -2,18 +2,23 @@ package DB
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql" // Импорт драйвера MySQL
 	"log"
+	"os"
 )
 
 func InitDB() *sql.DB {
-	//dbPath := os.Getenv("DB_PATH")
+	dbDriver := os.Getenv("DB_DRIVER")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbName := os.Getenv("DB_NAME")
+	dbHost := os.Getenv("DB_HOST")
+	if dbDriver == "" || dbUser == "" || dbPass == "" || dbName == "" {
+		log.Fatal("os env param error", dbDriver, dbUser, dbPass, dbName)
+	}
 
-	//if dbPath == "" {
-	//	log.Fatal("DB_PATH не задан", dbPath)
-	//}
-
-	db, err := sql.Open("sqlite3", "./db.db")
+	db, err := sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPass, dbHost, dbName))
 	if err != nil {
 		log.Fatal(err)
 	}
