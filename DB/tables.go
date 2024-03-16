@@ -63,10 +63,10 @@ func createWiFiTable(db *sql.DB) (err error) {
 }
 
 func createUserTable(db *sql.DB) (err error) {
-	// Создание таблицы юзеров, если ее не существуют
+	// Создание таблицы юзеров, если ее не существует
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        chat_id INTEGER UNIQUE NOT NULL,
+        chat_id INTEGER NOT NULL,
         apartment TEXT,
         phone_number TEXT
     );`)
@@ -74,6 +74,7 @@ func createUserTable(db *sql.DB) (err error) {
 		log.Fatal(err)
 	}
 
+	_, err = db.Exec(`CREATE INDEX idx_chat_id ON users (chat_id);`)
 	return
 }
 
@@ -85,7 +86,7 @@ func createOrderTabled(db *sql.DB) (err error) {
     house_name TEXT NOT NULL,
     status TEXT NOT NULL,
     description TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(chat_id)
 );`)
 	if err != nil {
 		log.Fatal(err)
