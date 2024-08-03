@@ -3,10 +3,11 @@ services:
   bot:
     build: .
     volumes:
-      - ./data:/data # Папка для SQLite DB
+      - ./data:/data # Папка для SQLite BD
     environment:
       - DB_DRIVER=mysql
       - DB_USER=root
-      - DB_PASS=293456WwW
+      - DB_PASS=root
       - DB_HOST=host.docker.internal
       - DB_NAME=bot_db
+      - MYSQL_ROOT_PASSWORD:root

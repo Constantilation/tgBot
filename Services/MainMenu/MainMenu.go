@@ -3,13 +3,14 @@ package MainMenu
 import (
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
-	tb "gopkg.in/telebot.v3"
 	"log"
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB/Handlers"
 	"tgBotElgora/Helpers"
 	"tgBotElgora/Services/OrderMenu"
+
+	"github.com/joho/godotenv"
+	tb "gopkg.in/telebot.v3"
 )
 
 func createMainMenu() (*tb.ReplyMarkup, []tb.Btn) {
@@ -70,7 +71,6 @@ func SetupMainMenuHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 	})
 
 	b.Handle(&btns[5], func(c tb.Context) error {
-		// Загрузка .env файла и получение данных админа
 		err := godotenv.Load()
 		if err != nil {
 			log.Println("Error loading .env file")
@@ -82,9 +82,8 @@ func SetupMainMenuHandlers(b *tb.Bot, db *sql.DB) *tb.ReplyMarkup {
 		adminPhone := config.GetConfig(config.AdminPhone)
 		botToken := config.GetConfig(config.TelegramBotToken)
 
-		Helpers.SendContactViaTelegramAPI(botToken, c.Chat().ID, adminName, adminLastName, adminPhone)
+		Helpers.SendContactViaTelegramAPI(botToken, c.Chat().ID, adminName, adminPhone, &adminLastName)
 
-		// Теперь мы отправляем контакт без ошибки
 		return c.Send(contactAdminHandlerText)
 	})
 

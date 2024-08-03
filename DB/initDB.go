@@ -3,9 +3,10 @@ package DB
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql" // Импорт драйвера MySQL
 	"log"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql" // Импорт драйвера MySQL
 )
 
 func InitDB() *sql.DB {
@@ -18,10 +19,28 @@ func InitDB() *sql.DB {
 		log.Fatal("os env param error", dbDriver, dbUser, dbPass, dbName)
 	}
 
-	db, err := sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPass, dbHost, dbName))
+	db, err := sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/", dbUser, dbPass, dbHost))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Подключение к БД успешно установлено!")
+
+	// Создание новой базы данных
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("База данных успешно создана или уже существует!")
+
+	db.Close()
+
+	// Шаг 2: Подключение к новой базе данных
+	db, err = sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPass, dbHost, dbName))
 
 	err = createWiFiTable(db)
 
