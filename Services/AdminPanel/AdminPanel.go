@@ -3,11 +3,14 @@ package AdminPanel
 import (
 	"database/sql"
 	"fmt"
-	tb "gopkg.in/telebot.v3"
 	"log"
 	"strconv"
 	"strings"
+	config "tgBotElgora/Config"
 	"tgBotElgora/DB/Handlers"
+	"tgBotElgora/Helpers"
+
+	tb "gopkg.in/telebot.v3"
 )
 
 func showAdminPanel() (tenantsBtn, activeOrdersBtn tb.Btn, markup *tb.ReplyMarkup) {
@@ -44,6 +47,11 @@ func ActiveOrdersHandler(c tb.Context, db *sql.DB, house string) error {
 		c.Send(fmt.Sprintf("Заказ %d: %s", order.ID, order.Description), markup)
 	}
 
+	phoneNumber, _ := Handlers.GetUserPhoneByChatID(db, c.Chat().ID)
+	botToken := config.GetConfig(config.TelegramBotToken)
+	adminID := GetAdminID()
+	chatId := tb.ChatID(adminID)
+	Helpers.SendContactViaTelegramAPI(botToken, int64(chatId), house, phoneNumber, nil)
 	return err
 }
 

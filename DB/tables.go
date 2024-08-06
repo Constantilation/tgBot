@@ -65,10 +65,11 @@ func createWiFiTable(db *sql.DB) (err error) {
 func createUserTable(db *sql.DB) (err error) {
 	// Создание таблицы юзеров, если ее не существует
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         chat_id INTEGER NOT NULL,
         apartment TEXT,
-        phone_number TEXT
+        phone_number TEXT,
+        UNIQUE KEY (chat_id)
     );`)
 	if err != nil {
 		log.Fatal(err)

@@ -3,11 +3,12 @@ package OrderMenu
 import (
 	"database/sql"
 	"fmt"
-	tb "gopkg.in/telebot.v3"
 	"log"
 	config "tgBotElgora/Config"
 	"tgBotElgora/DB/Handlers"
 	"tgBotElgora/Helpers"
+
+	tb "gopkg.in/telebot.v3"
 )
 
 func createOrderServices() (*tb.ReplyMarkup, []tb.Btn) {
@@ -62,7 +63,7 @@ func orderButtonHandler(b *tb.Bot, serviceName string, unique string, db *sql.DB
 		botToken := config.GetConfig(config.TelegramBotToken)
 		chatId := tb.ChatID(adminID)
 		phoneNumber, _ := Handlers.GetUserPhoneByChatID(db, c.Chat().ID)
-		Helpers.SendContactViaTelegramAPI(botToken, int64(chatId), c.Chat().FirstName, c.Chat().LastName, phoneNumber)
+		Helpers.SendContactViaTelegramAPI(botToken, int64(chatId), c.Chat().FirstName, phoneNumber, &c.Chat().LastName)
 		return c.Send(orderSent)
 	})
 

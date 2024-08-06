@@ -43,16 +43,20 @@ func GetHouseName(fullName string) (string, error) {
 	return fmt.Sprintf("%s %s", houseTypeName, houseNumber), nil
 }
 
-func SendContactViaTelegramAPI(botToken string, chatID int64, firstName, lastName, phoneNumber string) {
+func SendContactViaTelegramAPI(botToken string, chatID int64, firstName, phoneNumber string, lastName *string) {
 	if botToken == "" {
 		log.Fatal("TELEGRAM_BOT_TOKEN is not set")
 	}
 
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendContact", botToken)
+	ln := ""
+	if lastName != nil {
+		ln = *lastName
+	}
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"chat_id":      chatID,
 		"first_name":   firstName,
-		"last_name":    lastName,
+		"last_name":    ln,
 		"phone_number": phoneNumber,
 	})
 	if err != nil {

@@ -114,7 +114,7 @@ func GetActiveOrdersForHouse(db *sql.DB, houseName string) ([]Order, error) {
 func MarkOrderAsDone(db *sql.DB, orderID int) error {
 	_, err := db.Exec("DELETE FROM orders WHERE id = ?", orderID)
 	if err != nil {
-		return fmt.Errorf("deleting order with ID %s: %w", orderID, err)
+		return fmt.Errorf("deleting order with ID %d: %w", orderID, err)
 	}
 	return nil
 }
