@@ -19,7 +19,7 @@ func InitDB() *sql.DB {
 		log.Fatal("os env param error", dbDriver, dbUser, dbPass, dbName)
 	}
 
-	db, err := sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/", dbUser, dbPass, dbHost))
+	db, err := sql.Open(dbDriver, fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPass, dbHost, dbName))
 	if err != nil {
 		log.Fatal(err)
 	}
