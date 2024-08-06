@@ -69,7 +69,6 @@ func createUserTable(db *sql.DB) (err error) {
         chat_id INTEGER NOT NULL,
         apartment TEXT,
         phone_number TEXT
-        phone_number TEXT,
     );`)
 	if err != nil {
 		log.Fatal(err)
