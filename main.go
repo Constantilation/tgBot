@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	tb "gopkg.in/telebot.v3"
 	"log"
 	"strconv"
 	"strings"
@@ -15,6 +13,9 @@ import (
 	"tgBotElgora/Services/MainMenu"
 	"tgBotElgora/Services/SetHouse"
 	"time"
+
+	"github.com/joho/godotenv"
+	tb "gopkg.in/telebot.v3"
 )
 
 var selectedHouses = make(map[int64]string)
@@ -32,6 +33,7 @@ func main() {
 		Token:  botToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
+	log.Println("Бот успешно инициализирован")
 
 	if err != nil {
 		log.Fatal(err)
@@ -51,7 +53,6 @@ func main() {
 			setHouse := SetHouse.SetupSetHouseHandlers(b, mainMenu, db)
 			AdminPanel.CreateAdminApprovalHandlers(c, b, setHouse)
 		} else {
-			// Если пользователь найден в базе данных, показать главное меню
 			log.Println("User found in database, showing the main menu.")
 			return c.Send("Добро пожаловать обратно!", mainMenu)
 		}
@@ -60,6 +61,7 @@ func main() {
 	}
 
 	b.Handle("/start", func(c tb.Context) error {
+		log.Printf("Получена команда /start от пользователя %d", c.Sender().ID)
 		return mainMenuHandler(c)
 	})
 
@@ -71,12 +73,11 @@ func main() {
 		}
 		adminPanel := AdminPanel.CreateAdminPanelHandlers(b, db)
 
-		// Здесь можно добавить логику для отображения админской панели,
-		// например, отправить сообщение с кнопками для управления заказами и пользователями
 		return c.Send("Админ. панель", adminPanel)
 	})
 
 	b.Handle(tb.OnText, func(c tb.Context) error {
+		log.Printf("Получено сообщение: %s", c.Text())
 		text := c.Text()
 		switch text {
 		case AdminPanel.AdminPanelName:
@@ -112,7 +113,7 @@ func main() {
 					log.Println("Ошибка при конвертации ID пользователя:", err)
 					return c.Respond(&tb.CallbackResponse{Text: "Произошла ошибка при обработке запроса."})
 				}
-				return AdminPanel.EvictHandler(c, db, userID) // Передаем userID в функцию выселения
+				return AdminPanel.EvictHandler(c, db, userID)
 			}
 
 			if strings.Contains(parts[0], "house") {
@@ -150,5 +151,9 @@ func main() {
 		return c.Send("Главное меню", mainMenu)
 	})
 
+	log.Println("Запуск бота...")
+	log.Printf("Имя бота: %s, Username: @%s", b.Me.FirstName, b.Me.Username)
+
 	b.Start()
+	log.Printf("Имя бота: %s, Username: @%s", b.Me.FirstName, b.Me.Username)
 }
